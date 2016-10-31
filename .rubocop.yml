@@ -1,0 +1,19 @@
+Metrics/MethodLength:
+  CountComments: false  # count full line comments?
+  Max: 20
+
+Metrics/LineLength:
+  Max: 125
+
+Metrics/AbcSize:
+  Max: 30
+
+Style/FileName:
+  Exclude:
+    - 'lib/rspec-parallel.rb'
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/Documentation:
+  Enabled: false

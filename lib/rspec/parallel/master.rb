@@ -66,7 +66,10 @@ module RSpec
       # @return [Integer] pid of the spawned worker process
       def spawn_worker
         Kernel.fork do
-          Worker.new(socket_builder, pids.size).run
+          worker = Worker.new(socket_builder, pids.size)
+          $0 = "rspec-parallel worker [#{worker.number}]"
+          RSpec::Parallel.configuration.after_fork_block.call(worker.number)
+          worker.run
           Kernel.exit! # avoid running any `at_exit` functions.
         end
       end

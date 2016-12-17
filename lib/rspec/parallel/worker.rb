@@ -7,7 +7,6 @@ module RSpec
       # @param socket_builder [RSpec::Parallel::SocketBuilder]
       # @param number [Integer]
       def initialize(socket_builder, number)
-        $0 = "rspec-parallel worker [#{number}]"
         @socket_builder = socket_builder
         @number = number
       end

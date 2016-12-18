@@ -5,11 +5,11 @@ module RSpec
   module Parallel
     module SocketBuilder
       class UNIXSocket < Base
+        private
+
         # @note Implement {RSpec::Parallel::SocketBuilder::Base#build}.
-        def run
+        def build
           ::UNIXSocket.new(info.first)
-        rescue
-          nil
         end
       end
     end

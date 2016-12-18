@@ -7,12 +7,24 @@ module RSpec
           @info = info
         end
 
-        # @return [BasicSocket]
-        def run
-          raise NotImplementedError
+        # @return [BasicSocket, nil]
+        def run(retry_counter = 3)
+          build
+        rescue
+          retry_counter -= 1
+          if retry_counter > 0
+            sleep rand
+            retry
+          end
+          nil
         end
 
         private
+
+        # @return [BasicSocket]
+        def build
+          raise NotImplementedError
+        end
 
         # @return [Array]
         attr_reader :info

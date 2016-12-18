@@ -2,7 +2,7 @@ require "socket"
 
 RSpec.describe RSpec::Parallel::SocketBuilder::TCPSocket do
   describe "#run" do
-    subject { builder.run }
+    subject { builder.run(1) }
     let(:builder) { described_class.new(*info) }
 
     context "with valid info" do

@@ -5,11 +5,11 @@ module RSpec
   module Parallel
     module SocketBuilder
       class TCPSocket < Base
+        private
+
         # @note Implement {RSpec::Parallel::SocketBuilder::Base#build}.
-        def run
+        def build
           ::TCPSocket.new(*info)
-        rescue
-          nil
         end
       end
     end

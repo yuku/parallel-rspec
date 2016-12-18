@@ -34,6 +34,7 @@ module RSpec
       def spawn_worker(socket_builder)
         pid = Kernel.fork do
           sleep 0.1 # Make sure that distributor is readly
+          RSpec.reset # Avoid to share rspec state with master process
           worker = Worker.new(socket_builder, pids.size)
           $0 = "rspec-parallel worker [#{worker.number}]"
           RSpec::Parallel.configuration.after_fork_block.call(worker.number)

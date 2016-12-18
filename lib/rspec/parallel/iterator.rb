@@ -8,7 +8,7 @@ module RSpec
         @socket_builder = socket_builder
       end
 
-      # @yield [RSpec::Parallel::Suite]
+      # @yield [RSpec::Core::ExampleGroup]
       def each
         loop do
           socket = connect_to_distributor
@@ -18,7 +18,7 @@ module RSpec
           break unless (data = socket.read(65_536))
           socket.close
           break unless (suite = Marshal.load(data))
-          yield suite
+          yield suite.to_example_group
         end
       end
 

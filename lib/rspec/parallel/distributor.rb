@@ -12,21 +12,18 @@ module RSpec
       attr_reader :path
 
       # @param args [Array<String>] command line arguments
-      # @param bind [Array<(String, Integer)>, nil]
       # @raise [RSpec::Parallel::EmptyQueue]
-      def initialize(args, bind)
+      def initialize(args)
         options = ::RSpec::Core::ConfigurationOptions.new(args)
         options.configure(::RSpec.configuration)
         @queue = ::RSpec.configuration.files_to_run.uniq
         raise EmptyQueue if @queue.empty?
         @path = "/tmp/rspec-parallel-#{$PID}.sock"
-        @bind = bind
         remove_socket_file
       end
 
       # @return [void]
       def close
-        tcp_server.close if tcp_server
         unix_server.close
         remove_socket_file
       end
@@ -49,9 +46,6 @@ module RSpec
 
       private
 
-      # @return [Array<(String, Integer)>, nil]
-      attr_reader :bind
-
       # @example
       #   queue
       #   #=> ["spec/rspec/parallel_spec.rb", "spec/rspec/parallel/configuration_spec.rb"]
@@ -60,17 +54,12 @@ module RSpec
 
       # @return [Array<BasicSocket>] array of servers
       def servers
-        [unix_server, tcp_server].compact
+        [unix_server]
       end
 
       # @return [UNIXServer]
       def unix_server
         @unix_server ||= UNIXServer.new(path)
-      end
-
-      # @return [TCPServer]
-      def tcp_server
-        @tcp_server ||= bind && TCPServer.new(*bind)
       end
 
       # @return [void]

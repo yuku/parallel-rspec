@@ -2,12 +2,8 @@ module RSpec
   module Parallel
     # Stores runtime configuration information.
     #
-    # @!attribute bind
-    #   @return [Array<(String, Integer)>, nil]
     # @!attribute concurrency
     #   @return [Integer]
-    # @!attribute upstream
-    #   @return [Array<(String, Integer)>, nil] pair of host and port of upstream server
     class Configuration
       DEFULT_AFTER_FORK = ->(_worker) {}
 
@@ -32,7 +28,6 @@ module RSpec
       end
 
       attr_writer :concurrency
-      attr_accessor :upstream, :bind
     end
   end
 end

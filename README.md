@@ -44,24 +44,6 @@ RSpec::Parallel.configure do |config|
 end
 ```
 
-### Distributed mode
-
-Rspec-parallel can be distributed over several servers. Set `bind` configuration option on a master server:
-
-```ruby
-RSpec::Parallel.configure do |config|
-  config.bind = ["0.0.0.0", 4629]
-end
-```
-
-Then execute set `upstream` configuration option on slave servers:
-
-```ruby
-RSpec::Parallel.configure do |config|
-  config.upstream = [master_server_ip, 4629]
-end
-```
-
 ## License
 
 [MIT](https://github.com/yuku-t/rspec-parallel/blob/master/LICENSE) © [Yuku TAKAHASHI](https://github.com/yuku-t)

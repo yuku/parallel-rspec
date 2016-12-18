@@ -36,6 +36,8 @@ module RSpec
         return unless (socket = socket_builder.run)
         socket.puts("POP")
         socket
+      rescue
+        nil
       end
     end
   end

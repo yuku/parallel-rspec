@@ -1,5 +1,4 @@
 require_relative "distributor"
-require_relative "socket_builder/tcp_socket"
 require_relative "socket_builder/unix_socket"
 require_relative "worker"
 
@@ -17,17 +16,11 @@ module RSpec
 
       # @return [void]
       def start
-        if central?
-          distributor = Distributor.new(args, RSpec::Parallel.configuration.bind)
-          RSpec::Parallel.configuration.concurrency.times do
-            spawn_worker(SocketBuilder::UNIXSocket.new(distributor.path))
-          end
-          distributor.run
-        else
-          RSpec::Parallel.configuration.concurrency.times do
-            spawn_worker(SocketBuilder::TCPSocket.new(*RSpec::Parallel.configuration.upstream))
-          end
+        distributor = Distributor.new(args)
+        RSpec::Parallel.configuration.concurrency.times do
+          spawn_worker(SocketBuilder::UNIXSocket.new(distributor.path))
         end
+        distributor.run
         Process.waitall
       end
 
@@ -35,11 +28,6 @@ module RSpec
 
       # @return [Array<String>]
       attr_reader :args
-
-      # @return [true, false] whether it is central master process
-      def central?
-        RSpec::Parallel.configuration.upstream.nil?
-      end
 
       # @param socket_builder [RSpec::Parallel::SocketBuilder::Base]
       def spawn_worker(socket_builder)

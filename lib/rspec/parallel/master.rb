@@ -9,52 +9,49 @@ module RSpec
       # @return [Array<Integer>] array of pids of spawned worker processes
       attr_reader :pids
 
-      def initialize
+      # @param args [Array<String>]
+      def initialize(args)
+        @args = args
         @pids = []
       end
 
       # @return [void]
       def start
-        RSpec::Parallel.configuration.concurrency.times do
-          pid = spawn_worker
-          pids << pid
-          Process.detach(pid)
+        if central?
+          distributor = Distributor.new(args, RSpec::Parallel.configuration.bind)
+          RSpec::Parallel.configuration.concurrency.times do
+            spawn_worker(SocketBuilder::UNIXSocket.new(distributor.path))
+          end
+          distributor.run
+        else
+          RSpec::Parallel.configuration.concurrency.times do
+            spawn_worker(SocketBuilder::TCPSocket.new(*RSpec::Parallel.configuration.upstream))
+          end
         end
-        distributor.run if central?
         Process.waitall
       end
 
       private
 
-      # @return [RSpec::Parallel::Distributor, nil]
-      def distributor
-        return @distributor if instance_variable_defined? :@distributor
-        @distributor ||= central? ? Distributor.new(RSpec::Parallel.configuration.bind) : nil
-      end
+      # @return [Array<String>]
+      attr_reader :args
 
       # @return [true, false] whether it is central master process
       def central?
         RSpec::Parallel.configuration.upstream.nil?
       end
 
-      # @return [Integer] pid of the spawned worker process
-      def spawn_worker
-        Kernel.fork do
+      # @param socket_builder [RSpec::Parallel::SocketBuilder::Base]
+      def spawn_worker(socket_builder)
+        pid = Kernel.fork do
           worker = Worker.new(socket_builder, pids.size)
           $0 = "rspec-parallel worker [#{worker.number}]"
           RSpec::Parallel.configuration.after_fork_block.call(worker.number)
           worker.run
           Kernel.exit! # avoid running any `at_exit` functions.
         end
-      end
-
-      # @return [RSpec::Parallel::SocketBuilder::Base]
-      def socket_builder
-        if central?
-          SocketBuilder::UNIXSocket.new(distributor.path)
-        else
-          SocketBuilder::TCPSocket.new(*upstream)
-        end
+        pids << pid
+        Process.detach(pid)
       end
     end
   end

@@ -1,6 +1,9 @@
 require "english"
 require "fileutils"
 require "socket"
+require "rspec/core"
+
+require_relative "./errors"
 
 module RSpec
   module Parallel
@@ -8,10 +11,15 @@ module RSpec
       # @return [String, nil] path to unix domain socket
       attr_reader :path
 
+      # @param args [Array<String>] command line arguments
       # @param bind [Array<(String, Integer)>, nil]
-      def initialize(bind)
+      # @raise [RSpec::Parallel::EmptyQueue]
+      def initialize(args, bind)
+        options = ::RSpec::Core::ConfigurationOptions.new(args)
+        options.configure(::RSpec.configuration)
+        @queue = ::RSpec.configuration.files_to_run.uniq
+        raise EmptyQueue if @queue.empty?
         @path = "/tmp/rspec-parallel-#{$PID}.sock"
-        @queue = []
         @bind = bind
         remove_socket_file
       end
@@ -25,13 +33,13 @@ module RSpec
 
       # @return [void]
       def run
-        until @queue.empty?
+        until queue.empty?
           rs, _ws, _es = IO.select(servers)
           rs.each do |server|
             socket = server.accept
             case socket.gets.strip
             when /\APOP/
-              socket.write(Marshal.dump(@queue.pop))
+              socket.write(Marshal.dump(queue.pop))
             end
             socket.close
           end
@@ -43,6 +51,12 @@ module RSpec
 
       # @return [Array<(String, Integer)>, nil]
       attr_reader :bind
+
+      # @example
+      #   queue
+      #   #=> ["spec/rspec/parallel_spec.rb", "spec/rspec/parallel/configuration_spec.rb"]
+      # @return [Array<String>]
+      attr_reader :queue
 
       # @return [Array<BasicSocket>] array of servers
       def servers

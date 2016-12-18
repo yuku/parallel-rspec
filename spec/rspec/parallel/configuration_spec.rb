@@ -1,5 +1,3 @@
-require "rspec/parallel/configuration"
-
 RSpec.describe RSpec::Parallel::Configuration do
   let(:configuration) { described_class.new }
 

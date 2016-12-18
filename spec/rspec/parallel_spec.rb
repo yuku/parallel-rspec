@@ -1,6 +1,3 @@
-require "rspec/parallel"
-require "rspec/parallel/configuration"
-
 RSpec.describe RSpec::Parallel do
   describe ".configuration" do
     subject { described_class.configuration }

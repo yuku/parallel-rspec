@@ -18,7 +18,7 @@ $ rspec-parallel spec
 
 If spec/parallel_spec_helper.rb is found, the `rspec-parallel` command loads it before starting the test. Since rspec-parallel uses fork(2) to spawn off workers, you must ensure each worker runs in an isolated environment. Use the `after_fork` hook to reset any global state.
 
-```rb
+```ruby
 RSpec::Parallel.configure do |config|
   config.after_fork do |num|
     # Use separate database.
@@ -38,7 +38,7 @@ $ rake db:test:prepare_sequential
 
 The number of workers spawned by rspec-parallel is the number of available CPU cores by default. To controll the concurrency, use `concurrency` configuration option:
 
-```rb
+```ruby
 RSpec::Parallel.configure do |config|
   config.concurrency = 4
 end
@@ -48,7 +48,7 @@ end
 
 Rspec-parallel can be distributed over several servers. Set `bind` configuration option on a master server:
 
-```rb
+```ruby
 RSpec::Parallel.configure do |config|
   config.bind = ["0.0.0.0", 4629]
 end
@@ -56,7 +56,7 @@ end
 
 Then execute set `upstream` configuration option on slave servers:
 
-```rb
+```ruby
 RSpec::Parallel.configure do |config|
   config.upstream = [master_server_ip, 4629]
 end

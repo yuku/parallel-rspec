@@ -1,3 +1,4 @@
+require "socket"
 require_relative "base"
 
 module RSpec

@@ -1,5 +1,6 @@
 require "english"
 require "fileutils"
+require "socket"
 
 module RSpec
   module Parallel

@@ -1,4 +1,5 @@
 require_relative "iterator"
+require_relative "runner"
 
 module RSpec
   module Parallel
@@ -6,24 +7,23 @@ module RSpec
       # @return [Integer]
       attr_reader :number
 
+      # @param args [Array<String>]
       # @param socket_builder [RSpec::Parallel::SocketBuilder::Base]
       # @param number [Integer]
-      def initialize(socket_builder, number)
+      def initialize(args, socket_builder, number)
+        @args = args
         @iterator = Iterator.new(socket_builder)
         @number = number
       end
 
       # @return [void]
       def run
-        iterator.each do |suite|
-          puts "Worker[#{number}] #{suite.inspect}"
-        end
+        Runner.new(args).run_specs(iterator).to_i
       end
 
       private
 
-      # @return [RSpec::Parallel::Iterator]
-      attr_reader :iterator
+      attr_reader :iterator, :args
     end
   end
 end

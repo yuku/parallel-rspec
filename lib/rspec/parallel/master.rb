@@ -6,30 +6,16 @@ require_relative "worker"
 module RSpec
   module Parallel
     class Master
-      HOST_PORT_REGEXP = /\A(?<host>[0-9a-zA-Z\-.]+):(?<port>\d+)\z/
-
       # @return [Array<Integer>] array of pids of spawned worker processes
       attr_reader :pids
 
-      # @param concurrency [Integer, nil]
-      # @param upstream [String]
-      # @param bind [String]
-      def initialize(concurrency: nil, upstream: nil, bind: nil)
+      def initialize
         @pids = []
-        @concurrency = concurrency
-
-        if (match = HOST_PORT_REGEXP.match(upstream))
-          @upstream = match[:host], match[:port].to_i
-        else
-          match = HOST_PORT_REGEXP.match(bind)
-          bind = match[:host], match[:port].to_i if match
-          @distributor = Distributor.new(bind)
-        end
       end
 
       # @return [void]
       def start
-        concurrency.times do
+        RSpec::Parallel.configuration.concurrency.times do
           pid = spawn_worker
           pids << pid
           Process.detach(pid)
@@ -41,26 +27,14 @@ module RSpec
       private
 
       # @return [RSpec::Parallel::Distributor, nil]
-      attr_reader :distributor
-
-      # @return [Array<(String, Integer)>, nil] pair of host and port of upstream server
-      attr_reader :upstream
+      def distributor
+        return @distributor if instance_variable_defined? :@distributor
+        @distributor ||= central? ? Distributor.new(RSpec::Parallel.configuration.bind) : nil
+      end
 
       # @return [true, false] whether it is central master process
       def central?
-        upstream.nil?
-      end
-
-      # @return [Integer]
-      def concurrency
-        @concurrency ||=
-          if File.exist?("/proc/cpuinfo")
-            File.read("/proc/cpuinfo").split("\n").grep(/processor/).size
-          elsif RUBY_PLATFORM =~ /darwin/
-            `/usr/sbin/sysctl -n hw.activecpu`.to_i
-          else
-            2
-          end
+        RSpec::Parallel.configuration.upstream.nil?
       end
 
       # @return [Integer] pid of the spawned worker process

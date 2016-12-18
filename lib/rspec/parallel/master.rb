@@ -8,7 +8,7 @@ module RSpec
       # @return [Array<Integer>] array of pids of spawned worker processes
       attr_reader :pids
 
-      # @param args [Array<String>]
+      # @param args [Array<String>] command line arguments
       def initialize(args)
         @args = args
         @pids = []
@@ -16,7 +16,8 @@ module RSpec
 
       # @return [void]
       def start
-        distributor = Distributor.new(args)
+        distributor = Distributor.new
+        distributor.load_suites(args)
         RSpec::Parallel.configuration.concurrency.times do
           spawn_worker(SocketBuilder::UNIXSocket.new(distributor.path))
         end

@@ -4,6 +4,7 @@ require "socket"
 require "rspec/core"
 
 require_relative "./errors"
+require_relative "./suite"
 
 module RSpec
   module Parallel
@@ -11,14 +12,9 @@ module RSpec
       # @return [String, nil] path to unix domain socket
       attr_reader :path
 
-      # @param args [Array<String>] command line arguments
-      # @raise [RSpec::Parallel::EmptyQueue]
-      def initialize(args)
-        options = ::RSpec::Core::ConfigurationOptions.new(args)
-        options.configure(::RSpec.configuration)
-        @queue = ::RSpec.configuration.files_to_run.uniq
-        raise EmptyQueue if @queue.empty?
+      def initialize
         @path = "/tmp/rspec-parallel-#{$PID}.sock"
+        @queue = []
         remove_socket_file
       end
 
@@ -44,12 +40,21 @@ module RSpec
         close
       end
 
+      # @param args [Array<String>] command line arguments
+      # @raise [RSpec::Parallel::EmptyQueue]
+      # @return [void]
+      def load_suites(args)
+        ::RSpec.world.example_groups.clear
+        files_to_run(args).each { |path| Kernel.load(path) }
+        @queue = ::RSpec.world.example_groups.map do |example_or_group|
+          Suite.new(example_or_group.id, example_or_group.metadata[:file_path])
+        end
+        raise EmptyQueue if @queue.empty?
+      end
+
       private
 
-      # @example
-      #   queue
-      #   #=> ["spec/rspec/parallel_spec.rb", "spec/rspec/parallel/configuration_spec.rb"]
-      # @return [Array<String>]
+      # @return [Array<RSpec::Parallel::Suite>]
       attr_reader :queue
 
       # @return [Array<BasicSocket>] array of servers
@@ -65,6 +70,17 @@ module RSpec
       # @return [void]
       def remove_socket_file
         FileUtils.rm(path, force: true)
+      end
+
+      # @example
+      #   files_to_run
+      #   #=> ["spec/rspec/parallel_spec.rb", "spec/rspec/parallel/configuration_spec.rb"]
+      # @param args [Array<String>] command line arguments
+      # @return [Array<String>]
+      def files_to_run(args)
+        options = ::RSpec::Core::ConfigurationOptions.new(args)
+        options.configure(::RSpec.configuration)
+        ::RSpec.configuration.files_to_run.uniq
       end
     end
   end

@@ -18,15 +18,19 @@ module RSpec
           break if socket.nil?
           _, _, es = IO.select([socket], nil, [socket])
           break unless es.empty?
-          data = socket.read(65_536)
-          break unless data
+          break unless (data = socket.read(65_536))
           socket.close
-          item = Marshal.load(data)
-          puts "Worker[#{number}] #{item}"
+          break unless (item = Marshal.load(data))
+          break if item.nil?
+          process(item)
         end
       end
 
       private
+
+      def process(item)
+        puts "Worker[#{number}] #{item}"
+      end
 
       # @return [RSpec::Parallel::SocketBuilder]
       attr_reader :socket_builder

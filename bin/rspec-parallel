@@ -5,4 +5,4 @@ require "rspec-parallel"
 helper_path = ENV.fetch("RSPEC_PARALLEL_HELPER", "spec/parallel_spec_helper.rb")
 Kernel.load(helper_path) if File.readable?(helper_path)
 
-RSpec::Parallel::Master.new(ARGV).start
+RSpec::Parallel::Runner.new(ARGV).start

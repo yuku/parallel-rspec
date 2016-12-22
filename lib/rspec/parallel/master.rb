@@ -1,69 +1,90 @@
-require_relative "distributor"
-require_relative "socket_builder/unix_socket"
-require_relative "worker"
+require "english"
+require "fileutils"
+require "socket"
+require "rspec/core"
+
+require_relative "errors"
+require_relative "protocol"
+require_relative "suite"
 
 module RSpec
   module Parallel
     class Master
-      # @return [Array<Integer>] array of pids of spawned worker processes
-      attr_reader :pids
+      # @return [String, nil] path to unix domain socket
+      attr_reader :path
 
-      # @param args [Array<String>] command line arguments
-      def initialize(args)
-        @args = args
-        @pids = []
+      def initialize
+        @path = "/tmp/rspec-parallel-#{$PID}.sock"
+        @queue = []
+        remove_socket_file
       end
 
       # @return [void]
-      def start
-        distributor = Distributor.new
-        distributor.load_suites(args)
-        RSpec::Parallel.configuration.concurrency.times do
-          spawn_worker(SocketBuilder::UNIXSocket.new(distributor.path))
-        end
-        distributor.run
-        Process.waitall
+      def close
+        unix_server.close
+        remove_socket_file
+      end
 
-        pids.each.with_index do |pid, index|
-          puts "----> output from worker[#{index}]"
-          File.open(output_file_path(pid)) do |file|
-            puts file.read
+      # @return [void]
+      def run
+        until queue.empty?
+          rs, _ws, _es = IO.select(servers)
+          rs.each do |server|
+            socket = server.accept
+            method, _data = socket.gets.strip.split("\t", 2)
+            case method
+            when Protocol::POP
+              suite = Marshal.dump(queue.pop)
+              puts suite
+              socket.write(suite)
+            end
+            socket.close
           end
         end
+        close
+      end
+
+      # @param args [Array<String>] command line arguments
+      # @raise [RSpec::Parallel::EmptyQueue]
+      # @return [void]
+      def load_suites(args)
+        ::RSpec.world.example_groups.clear
+        files_to_run(args).each { |path| Kernel.load(path) }
+        @queue = ::RSpec.world.example_groups.map do |example_or_group|
+          Suite.new(example_or_group.id, example_or_group.metadata[:file_path])
+        end
+        raise EmptyQueue if @queue.empty?
       end
 
       private
 
-      # @return [Array<String>]
-      attr_reader :args
+      # @return [Array<RSpec::Parallel::Suite>]
+      attr_reader :queue
 
-      # @param socket_builder [RSpec::Parallel::SocketBuilder::Base]
-      def spawn_worker(socket_builder)
-        pid = Kernel.fork do
-          sleep 0.1 # Make sure that distributor is readly
-          RSpec.reset # Avoid to share rspec state with master process
-          worker = Worker.new(args, socket_builder, pids.size)
-          $0 = "rspec-parallel worker [#{worker.number}]"
-          RSpec::Parallel.configuration.after_fork_block.call(worker.number)
-
-          File.open(output_file_path($PID), "w") do |file|
-            # Redirect stdout and stderr to temp file
-            $stdout.reopen(file)
-            $stderr.reopen($stdout)
-            $stdout.sync = $stderr.sync = true
-            worker.run
-          end
-
-          Kernel.exit! # avoid running any `at_exit` functions.
-        end
-        pids << pid
-        Process.detach(pid)
+      # @return [Array<BasicSocket>] array of servers
+      def servers
+        [unix_server]
       end
 
-      # @param pid [Integer]
-      # @return [String]
-      def output_file_path(pid)
-        "/tmp/rspec-parallel-worker-#{pid}"
+      # @return [UNIXServer]
+      def unix_server
+        @unix_server ||= UNIXServer.new(path)
+      end
+
+      # @return [void]
+      def remove_socket_file
+        FileUtils.rm(path, force: true)
+      end
+
+      # @example
+      #   files_to_run
+      #   #=> ["spec/rspec/parallel_spec.rb", "spec/rspec/parallel/configuration_spec.rb"]
+      # @param args [Array<String>] command line arguments
+      # @return [Array<String>]
+      def files_to_run(args)
+        options = ::RSpec::Core::ConfigurationOptions.new(args)
+        options.configure(::RSpec.configuration)
+        ::RSpec.configuration.files_to_run.uniq
       end
     end
   end

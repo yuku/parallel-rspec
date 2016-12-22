@@ -23,6 +23,13 @@ module RSpec
         end
         distributor.run
         Process.waitall
+
+        pids.each.with_index do |pid, index|
+          puts "----> output from worker[#{index}]"
+          File.open(output_file_path(pid)) do |file|
+            puts file.read
+          end
+        end
       end
 
       private
@@ -38,11 +45,25 @@ module RSpec
           worker = Worker.new(args, socket_builder, pids.size)
           $0 = "rspec-parallel worker [#{worker.number}]"
           RSpec::Parallel.configuration.after_fork_block.call(worker.number)
-          worker.run
+
+          File.open(output_file_path($PID), "w") do |file|
+            # Redirect stdout and stderr to temp file
+            $stdout.reopen(file)
+            $stderr.reopen($stdout)
+            $stdout.sync = $stderr.sync = true
+            worker.run
+          end
+
           Kernel.exit! # avoid running any `at_exit` functions.
         end
         pids << pid
         Process.detach(pid)
+      end
+
+      # @param pid [Integer]
+      # @return [String]
+      def output_file_path(pid)
+        "/tmp/rspec-parallel-worker-#{pid}"
       end
     end
   end

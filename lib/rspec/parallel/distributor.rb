@@ -32,7 +32,9 @@ module RSpec
             socket = server.accept
             case socket.gets.strip
             when /\APOP/
-              socket.write(Marshal.dump(queue.pop))
+              suite = Marshal.dump(queue.pop)
+              puts suite
+              socket.write(suite)
             end
             socket.close
           end

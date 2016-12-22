@@ -44,6 +44,12 @@ RSpec::Parallel.configure do |config|
 end
 ```
 
+`db:test:prepare_sequential` task takes concurrency as an argument.
+
+```sh
+$ rake "db:test:prepare_sequential[4]"
+```
+
 ## License
 
 [MIT](https://github.com/yuku-t/rspec-parallel/blob/master/LICENSE) © [Yuku TAKAHASHI](https://github.com/yuku-t)

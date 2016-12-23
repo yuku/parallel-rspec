@@ -1,10 +1,10 @@
 require "fileutils"
 require "socket"
 
-RSpec.describe RSpec::Parallel::SocketBuilder::UNIXSocket do
+RSpec.describe RSpec::Parallel::SocketBuilder do
   describe "#run" do
     subject { builder.run(1) }
-    let(:builder) { described_class.new(*info) }
+    let(:builder) { described_class.new(path) }
 
     context "with valid info" do
       before { @server = UNIXServer.new(path) }
@@ -15,13 +15,12 @@ RSpec.describe RSpec::Parallel::SocketBuilder::UNIXSocket do
       end
 
       let(:path) { "/tmp/unix-soket-#{rand}" }
-      let(:info) { [path] }
 
       it { should be_a ::UNIXSocket }
     end
 
     context "with invalid info" do
-      let(:info) { [] }
+      let(:path) { nil }
 
       it { should be_nil }
     end

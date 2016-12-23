@@ -5,7 +5,7 @@ require "socket"
 
 require_relative "errors"
 require_relative "protocol"
-require_relative "socket_builder/unix_socket"
+require_relative "socket_builder"
 require_relative "suite"
 
 module RSpec
@@ -57,9 +57,9 @@ module RSpec
       # Create a socket builder which builds a socket to
       # connect with the master process.
       #
-      # @return [RSpec::Parallel::SocketBuilder::Base]
+      # @return [RSpec::Parallel::SocketBuilder]
       def socket_builder
-        SocketBuilder::UNIXSocket.new(path)
+        SocketBuilder.new(path)
       end
 
       private

@@ -7,7 +7,7 @@ module RSpec
       attr_reader :number
 
       # @param args [Array<String>]
-      # @param socket_builder [RSpec::Parallel::SocketBuilder::Base]
+      # @param socket_builder [RSpec::Parallel::SocketBuilder]
       # @param number [Integer]
       def initialize(args, socket_builder, number)
         @args = args

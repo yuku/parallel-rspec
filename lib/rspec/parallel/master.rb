@@ -31,9 +31,9 @@ module RSpec
             method, _data = socket.gets.strip.split("\t", 2)
             case method
             when Protocol::POP
-              suite = Marshal.dump(queue.pop)
-              puts suite
-              socket.write(suite)
+              suite = queue.pop
+              puts "Deliver #{suite.name}"
+              socket.write(Marshal.dump(suite))
             end
             socket.close
           end

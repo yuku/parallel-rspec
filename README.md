@@ -1,5 +1,7 @@
 # RSpec::Parallel
 
+[![wercker status](https://app.wercker.com/status/214cac59fa2938c9d373983bba71623e/m/master "wercker status")](https://app.wercker.com/project/byKey/214cac59fa2938c9d373983bba71623e)
+
 Parallel spec runner for RSpec 3.
 
 ## Install

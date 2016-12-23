@@ -5,32 +5,29 @@ require "socket"
 
 require_relative "errors"
 require_relative "protocol"
+require_relative "socket_builder/unix_socket"
 require_relative "suite"
 
 module RSpec
   module Parallel
     class Master
-      # @return [String, nil] path to unix domain socket
-      attr_reader :path
-
       def initialize
         @path = "/tmp/rspec-parallel-#{$PID}.sock"
         @queue = []
-        remove_socket_file
+        @server = ::UNIXServer.new(@path)
       end
 
       # @return [void]
       def close
-        unix_server.close
-        remove_socket_file
+        server.close
       end
 
       # @return [void]
       def run
         until queue.empty?
-          rs, _ws, _es = IO.select(servers)
-          rs.each do |server|
-            socket = server.accept
+          rs, _ws, _es = IO.select([server])
+          rs.each do |s|
+            socket = s.accept
             method, _data = socket.gets.strip.split("\t", 2)
             case method
             when Protocol::POP
@@ -42,6 +39,7 @@ module RSpec
           end
         end
         close
+        remove_socket_file
       end
 
       # @param args [Array<String>] command line arguments
@@ -56,20 +54,24 @@ module RSpec
         raise EmptyQueue if @queue.empty?
       end
 
+      # Create a socket builder which builds a socket to
+      # connect with the master process.
+      #
+      # @return [RSpec::Parallel::SocketBuilder::Base]
+      def socket_builder
+        SocketBuilder::UNIXSocket.new(path)
+      end
+
       private
+
+      # @return [String, nil] path to unix domain socket
+      attr_reader :path
 
       # @return [Array<RSpec::Parallel::Suite>]
       attr_reader :queue
 
-      # @return [Array<BasicSocket>] array of servers
-      def servers
-        [unix_server]
-      end
-
       # @return [UNIXServer]
-      def unix_server
-        @unix_server ||= UNIXServer.new(path)
-      end
+      attr_reader :server
 
       # @return [void]
       def remove_socket_file

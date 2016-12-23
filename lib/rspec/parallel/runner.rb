@@ -1,7 +1,6 @@
 require "English"
 
 require_relative "master"
-require_relative "socket_builder/unix_socket"
 require_relative "worker"
 
 module RSpec
@@ -19,10 +18,10 @@ module RSpec
       # @return [void]
       def start
         master = Master.new
-        master.load_suites(args)
         RSpec::Parallel.configuration.concurrency.times do
-          spawn_worker(SocketBuilder::UNIXSocket.new(master.path))
+          spawn_worker(master)
         end
+        master.load_suites(args)
         master.run
         Process.waitall
 
@@ -39,12 +38,12 @@ module RSpec
       # @return [Array<String>]
       attr_reader :args
 
-      # @param socket_builder [RSpec::Parallel::SocketBuilder::Base]
-      def spawn_worker(socket_builder)
+      # @param master [RSpec::Parallel::Master]
+      def spawn_worker(master)
         pid = Kernel.fork do
-          sleep 0.1 # Make sure that master is readly
           RSpec.reset # Avoid to share rspec state with master process
-          worker = Worker.new(args, socket_builder, pids.size)
+          master.close
+          worker = Worker.new(args, master.socket_builder, pids.size)
           $0 = "rspec-parallel worker [#{worker.number}]"
           RSpec::Parallel.configuration.after_fork_block.call(worker.number)
 

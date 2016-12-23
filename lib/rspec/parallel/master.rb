@@ -1,7 +1,7 @@
-require "english"
+require "English"
 require "fileutils"
-require "socket"
 require "rspec/core"
+require "socket"
 
 require_relative "errors"
 require_relative "protocol"

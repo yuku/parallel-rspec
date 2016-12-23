@@ -1,3 +1,5 @@
+require "English"
+
 require_relative "master"
 require_relative "socket_builder/unix_socket"
 require_relative "worker"

@@ -1,0 +1,16 @@
+box: ruby
+build:
+  steps:
+    - bundle-install
+rubocop:
+  steps:
+    - bundle-install
+    - script:
+      name: rubocop
+      code: bundle exec rake rubocop
+rspec:
+  steps:
+    - bundle-install
+    - script:
+        name: rspec
+        code: bundle exec rake spec

@@ -17,6 +17,7 @@ module RSpec
 
       # @return [void]
       def run
+        iterator.ping
         SpecRunner.new(args).run_specs(iterator).to_i
       end
 
@@ -32,11 +33,29 @@ module RSpec
           @socket_builder = socket_builder
         end
 
+        # @return [void]
+        def ping
+          loop do
+            socket = connect_to_distributor
+            if socket.nil?
+              sleep 0.5
+              next
+            end
+            socket.puts(Protocol::PING)
+            # TODO: handle socket error and check pong message
+            IO.select([socket])
+            socket.read(65_536)
+            socket.close
+            break
+          end
+        end
+
         # @yield [RSpec::Core::ExampleGroup]
         def each
           loop do
             socket = connect_to_distributor
             break if socket.nil?
+            socket.puts(Protocol::POP)
             _, _, es = IO.select([socket], nil, [socket])
             break unless es.empty?
             break unless (data = socket.read(65_536))
@@ -53,11 +72,7 @@ module RSpec
 
         # @return [BasicSocket, nil]
         def connect_to_distributor
-          return unless (socket = socket_builder.run)
-          socket.puts(Protocol::POP)
-          socket
-        rescue
-          nil
+          socket_builder.run
         end
       end
 

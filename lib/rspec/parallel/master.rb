@@ -34,6 +34,8 @@ module RSpec
               suite = queue.pop
               puts "Deliver #{suite.name}"
               socket.write(Marshal.dump(suite))
+            when Protocol::PING
+              socket.write("ok")
             end
             socket.close
           end

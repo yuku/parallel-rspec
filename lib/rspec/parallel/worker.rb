@@ -10,20 +10,20 @@ module RSpec
       # @param socket_builder [RSpec::Parallel::SocketBuilder]
       # @param number [Integer]
       def initialize(args, socket_builder, number)
-        @args = args
         @iterator = Iterator.new(socket_builder)
         @number = number
+        @spec_runner = SpecRunner.new(args)
       end
 
       # @return [void]
       def run
         iterator.ping
-        SpecRunner.new(args).run_specs(iterator).to_i
+        spec_runner.run_specs(iterator).to_i
       end
 
       private
 
-      attr_reader :iterator, :args
+      attr_reader :iterator, :spec_runner
 
       class Iterator
         include Enumerable

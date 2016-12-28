@@ -6,13 +6,12 @@ module RSpec
       # @return [Integer]
       attr_reader :number
 
-      # @param args [Array<String>]
-      # @param socket_builder [RSpec::Parallel::SocketBuilder]
+      # @param master [RSpec::Parallel::Master]
       # @param number [Integer]
-      def initialize(args, socket_builder, number)
-        @iterator = Iterator.new(socket_builder)
+      def initialize(master, number)
+        @iterator = Iterator.new(master.socket_builder)
         @number = number
-        @spec_runner = SpecRunner.new(args)
+        @spec_runner = SpecRunner.new(master.args)
       end
 
       # @return [void]

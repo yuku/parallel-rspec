@@ -11,7 +11,12 @@ require_relative "suite"
 module RSpec
   module Parallel
     class Master
-      def initialize
+      # @param args [Array<String>]
+      attr_reader :args
+
+      # @param args [Array<String>] command line arguments
+      def initialize(args)
+        @args = args
         @path = "/tmp/rspec-parallel-#{$PID}.sock"
         @queue = []
         @server = ::UNIXServer.new(@path)
@@ -44,13 +49,12 @@ module RSpec
         remove_socket_file
       end
 
-      # @param args [Array<String>] command line arguments
       # @raise [RSpec::Parallel::EmptyQueue]
       # @return [void]
-      def load_suites(args)
-        ::RSpec.world.example_groups.clear
-        files_to_run(args).each { |path| Kernel.load(path) }
+      def load_suites
+        files_to_run.each { |path| Kernel.load(path) }
         @queue = ::RSpec.world.example_groups.map do |example_or_group|
+          Suite.add_example_group(example_or_group)
           Suite.new(example_or_group.id, example_or_group.metadata[:file_path])
         end
         raise EmptyQueue if @queue.empty?
@@ -83,11 +87,8 @@ module RSpec
       # @example
       #   files_to_run
       #   #=> ["spec/rspec/parallel_spec.rb", "spec/rspec/parallel/configuration_spec.rb"]
-      # @param args [Array<String>] command line arguments
       # @return [Array<String>]
-      def files_to_run(args)
-        options = ::RSpec::Core::ConfigurationOptions.new(args)
-        options.configure(::RSpec.configuration)
+      def files_to_run
         ::RSpec.configuration.files_to_run.uniq
       end
     end

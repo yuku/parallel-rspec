@@ -45,7 +45,7 @@ module RSpec
           master.close
           worker = Worker.new(args, master.socket_builder, pids.size)
           $0 = "rspec-parallel worker [#{worker.number}]"
-          RSpec::Parallel.configuration.after_fork_block.call(worker.number)
+          RSpec::Parallel.configuration.after_fork_block.call(worker)
 
           File.open(output_file_path($PID), "w") do |file|
             # Redirect stdout and stderr to temp file

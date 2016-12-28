@@ -22,9 +22,9 @@ If spec/parallel_spec_helper.rb is found, the `rspec-parallel` command loads it 
 
 ```ruby
 RSpec::Parallel.configure do |config|
-  config.after_fork do |num|
+  config.after_fork do |worker|
     # Use separate database.
-    ActiveRecord::Base.configurations["test"]["database"] << num.to_s
+    ActiveRecord::Base.configurations["test"]["database"] << worker.number.to_s
     ActiveRecord::Base.establish_connection(:test)
   end
 end

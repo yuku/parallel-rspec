@@ -13,16 +13,15 @@ module RSpec
       def initialize(args)
         @args = args
         @pids = []
+
+        # Configure RSpec core before initialize master instance and spawning
+        # worker processes to share its configuration.
+        configure_rspec
         @master = Master.new(args)
       end
 
       # @return [void]
       def start
-        # Configure RSpec core before spawning worker processes to share its configuration.
-        configure_rspec
-        # Although each worker process runs only a part of suites, there is little waste
-        # of memory because of copy-on-write.
-        master.load_suites
         RSpec::Parallel.configuration.concurrency.times do
           spawn_worker
         end

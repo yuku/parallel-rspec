@@ -57,10 +57,14 @@ module RSpec
             socket.puts(Protocol::POP)
             _, _, es = IO.select([socket], nil, [socket])
             break unless es.empty?
-            break unless (data = socket.read(65_536))
+            break unless (path = socket.read(65_536))
             socket.close
-            break unless (suite = Marshal.load(data))
-            yield suite.to_example_group
+
+            RSpec.world.example_groups.clear
+            Kernel.load path
+            RSpec.world.example_groups.each do |example_group|
+              yield example_group
+            end
           end
         end
 

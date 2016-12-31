@@ -97,6 +97,10 @@ module RSpec
         # @param example_groups [Array<RSpec::Core::ExampleGroup>]
         # @return [Integer] exit status code
         def run_specs(example_groups)
+          # Reset filter manager to run all specs. Just for simplicity
+          # TODO: Support config.run_all_when_everything_filtered = true
+          @configuration.filter_manager = RSpec::Core::FilterManager.new
+
           success = @configuration.reporter.report(0) do |reporter|
             @configuration.with_suite_hooks do
               example_groups.map do |g|

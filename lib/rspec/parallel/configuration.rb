@@ -38,7 +38,7 @@ module RSpec
 
       # @return [Integer]
       def log_level
-        @log_level ||= Logger::INFO
+        @log_level ||= Logger::WARN
       end
 
       attr_writer :concurrency, :logger, :log_level

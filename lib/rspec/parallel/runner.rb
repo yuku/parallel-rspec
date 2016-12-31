@@ -27,7 +27,7 @@ module RSpec
         end
         master.run
         Process.waitall
-
+      ensure
         pids.each.with_index do |pid, index|
           puts "----> output from worker[#{index}]"
           File.open(output_file_path(pid)) do |file|

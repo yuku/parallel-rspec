@@ -37,7 +37,7 @@ module RSpec
             case method
             when Protocol::POP
               path = files_to_run.pop
-              puts "Deliver #{path}"
+              RSpec::Parallel.configuration.logger.info("Deliver #{path}")
               socket.write(path)
             when Protocol::PING
               socket.write("ok")

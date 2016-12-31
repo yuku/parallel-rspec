@@ -48,15 +48,16 @@ module RSpec
       def spawn_worker
         pid = Kernel.fork do
           master.close
-          worker = Worker.new(master, pids.size)
-          $0 = "rspec-parallel worker [#{worker.number}]"
-          RSpec::Parallel.configuration.after_fork_block.call(worker)
 
           File.open(output_file_path($PID), "w") do |file|
             # Redirect stdout and stderr to temp file
-            $stdout.reopen(file)
-            $stderr.reopen($stdout)
-            $stdout.sync = $stderr.sync = true
+            STDOUT.reopen(file)
+            STDERR.reopen(STDOUT)
+            STDOUT.sync = STDERR.sync = true
+
+            worker = Worker.new(master, pids.size)
+            $0 = "rspec-parallel worker [#{worker.number}]"
+            RSpec::Parallel.configuration.after_fork_block.call(worker)
             worker.run
           end
 

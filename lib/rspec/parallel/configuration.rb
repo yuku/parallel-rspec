@@ -1,3 +1,5 @@
+require "logger"
+
 module RSpec
   module Parallel
     # Stores runtime configuration information.
@@ -27,7 +29,19 @@ module RSpec
           end
       end
 
-      attr_writer :concurrency
+      # @return [Logger]
+      def logger
+        @logger ||= Logger.new(STDERR).tap do |logger|
+          logger.level = log_level
+        end
+      end
+
+      # @return [Integer]
+      def log_level
+        @log_level ||= Logger::INFO
+      end
+
+      attr_writer :concurrency, :logger, :log_level
     end
   end
 end

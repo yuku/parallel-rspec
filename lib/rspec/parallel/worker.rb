@@ -9,8 +9,10 @@ module RSpec
       # @param master [RSpec::Parallel::Master]
       # @param number [Integer]
       def initialize(master, number)
+        RSpec::Parallel.configuration.logger.info("Initialize Iterator")
         @iterator = Iterator.new(master.socket_builder)
         @number = number
+        RSpec::Parallel.configuration.logger.info("Initialize SpecRunner")
         @spec_runner = SpecRunner.new(master.args)
       end
 
@@ -37,9 +39,11 @@ module RSpec
           loop do
             socket = connect_to_distributor
             if socket.nil?
+              RSpec::Parallel.configuration.logger.info("Sleep a little to wait master process")
               sleep 0.5
               next
             end
+            RSpec::Parallel.configuration.logger.info("Send PING request")
             socket.puts(Protocol::PING)
             # TODO: handle socket error and check pong message
             IO.select([socket])
@@ -54,13 +58,17 @@ module RSpec
           loop do
             socket = connect_to_distributor
             break if socket.nil?
+            RSpec::Parallel.configuration.logger.info("Send POP request")
             socket.puts(Protocol::POP)
             _, _, es = IO.select([socket], nil, [socket])
-            break unless es.empty?
-            break unless (path = socket.read(65_536))
+            unless es.empty?
+              RSpec::Parallel.configuration.logger.error("Socket error occurs")
+              break
+            end
+            path = socket.read(65_536)
             socket.close
-
             RSpec.world.example_groups.clear
+            RSpec::Parallel.configuration.logger.info("Load #{path}")
             Kernel.load path
             RSpec.world.example_groups.each do |example_group|
               yield example_group
@@ -91,7 +99,10 @@ module RSpec
         def run_specs(example_groups)
           success = @configuration.reporter.report(0) do |reporter|
             @configuration.with_suite_hooks do
-              example_groups.map { |g| g.run(reporter) }.all?
+              example_groups.map do |g|
+                RSpec::Parallel.configuration.logger.info("Run #{g.inspect}")
+                g.run(reporter)
+              end.all?
             end
           end && !@world.non_example_failure
 

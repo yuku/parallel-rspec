@@ -17,7 +17,7 @@ module RSpec
       # @param args [Array<String>] command line arguments
       def initialize(args)
         @args = args
-        @path = "/tmp/rspec-parallel-#{$PID}.sock"
+        @path = "/tmp/parallel-rspec-#{$PID}.sock"
         @files_to_run = ::RSpec.configuration.files_to_run.uniq
         @server = ::UNIXServer.new(@path)
       end

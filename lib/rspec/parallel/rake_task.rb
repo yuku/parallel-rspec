@@ -2,7 +2,7 @@ require "rspec/parallel"
 
 namespace :db do
   namespace :test do
-    desc "Prepare sequence of databases for rspec-parallel"
+    desc "Prepare sequence of databases for parallel-rspec"
     task :prepare_sequential, ["concurrency"] => :environment do |_, args|
       require "active_record/tasks/database_tasks"
       concurrency = Integer(args[:concurrency] || RSpec::Parallel.configuration.concurrency)

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require "rspec-parallel"
+require "parallel-rspec"
 
 helper_path = ENV.fetch("RSPEC_PARALLEL_HELPER", "spec/parallel_spec_helper.rb")
 Kernel.load(helper_path) if File.readable?(helper_path)

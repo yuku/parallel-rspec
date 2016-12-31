@@ -56,7 +56,7 @@ module RSpec
             STDOUT.sync = STDERR.sync = true
 
             worker = Worker.new(master, pids.size)
-            $0 = "rspec-parallel worker [#{worker.number}]"
+            $0 = "parallel-rspec worker [#{worker.number}]"
             RSpec::Parallel.configuration.after_fork_block.call(worker)
             worker.run
           end
@@ -70,7 +70,7 @@ module RSpec
       # @param pid [Integer]
       # @return [String]
       def output_file_path(pid)
-        "/tmp/rspec-parallel-worker-#{pid}"
+        "/tmp/parallel-rspec-worker-#{pid}"
       end
 
       def configure_rspec

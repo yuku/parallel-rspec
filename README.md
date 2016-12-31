@@ -7,18 +7,18 @@ Parallel spec runner for RSpec 3.
 ## Install
 
 ```sh
-$ gem install rspec-parallel
+$ gem install parallel-rspec
 ```
 
 ## Getting Started / Usage
 
-rspec-parallel bundles `rspec-parallel` binary which can be used directly:
+Parallel-rspec bundles `parallel-rspec` binary which can be used directly:
 
 ```sh
-$ rspec-parallel spec
+$ parallel-rspec spec
 ```
 
-If spec/parallel_spec_helper.rb is found, the `rspec-parallel` command loads it before starting the test. Since rspec-parallel uses fork(2) to spawn off workers, you must ensure each worker runs in an isolated environment. Use the `after_fork` hook to reset any global state.
+If spec/parallel_spec_helper.rb is found, the `parallel-rspec` command loads it before starting the test. Since parallel-rspec uses fork(2) to spawn off workers, you must ensure each worker runs in an isolated environment. Use the `after_fork` hook to reset any global state.
 
 ```ruby
 RSpec::Parallel.configure do |config|
@@ -38,7 +38,7 @@ $ rake db:test:prepare_sequential
 
 ### Controll concurrency
 
-The number of workers spawned by rspec-parallel is the number of available CPU cores by default. To controll the concurrency, use `concurrency` configuration option:
+The number of workers spawned by parallel-rspec is the number of available CPU cores by default. To controll the concurrency, use `concurrency` configuration option:
 
 ```ruby
 RSpec::Parallel.configure do |config|
@@ -54,4 +54,4 @@ $ rake "db:test:prepare_sequential[4]"
 
 ## License
 
-[MIT](https://github.com/yuku-t/rspec-parallel/blob/master/LICENSE) © [Yuku TAKAHASHI](https://github.com/yuku-t)
+[MIT](https://github.com/yuku-t/parallel-rspec/blob/master/LICENSE) © [Yuku TAKAHASHI](https://github.com/yuku-t)

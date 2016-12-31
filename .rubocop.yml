@@ -10,7 +10,7 @@ Metrics/AbcSize:
 
 Style/FileName:
   Exclude:
-    - 'lib/rspec-parallel.rb'
+    - 'lib/parallel-rspec.rb'
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes

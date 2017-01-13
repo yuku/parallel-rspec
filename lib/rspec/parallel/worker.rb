@@ -102,6 +102,10 @@ module RSpec
           @configuration.filter_manager = RSpec::Core::FilterManager.new
 
           success = @configuration.reporter.report(0) do |reporter|
+            # In genaral, ExampleGroup is configured by evaluating `describe`
+            # before `with_suite_hooks`
+            RSpec::Core::ExampleGroup.ensure_example_groups_are_configured
+
             @configuration.with_suite_hooks do
               example_groups.map do |g|
                 RSpec::Parallel.configuration.logger.info("Run #{g.inspect}")

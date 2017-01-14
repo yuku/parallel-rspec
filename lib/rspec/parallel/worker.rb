@@ -10,7 +10,7 @@ module RSpec
       # @param number [Integer]
       def initialize(master, number)
         RSpec::Parallel.configuration.logger.debug("Initialize Iterator")
-        @iterator = Iterator.new(master.socket_builder)
+        @iterator = Iterator.new(self, master.socket_builder)
         @number = number
         RSpec::Parallel.configuration.logger.debug("Initialize SpecRunner")
         @spec_runner = SpecRunner.new(master.args)
@@ -29,8 +29,10 @@ module RSpec
       class Iterator
         include Enumerable
 
+        # @param worker [RSpec::Parallel::Worker]
         # @param socket_builder [RSpec::Parallel::SocketBuilder]
-        def initialize(socket_builder)
+        def initialize(worker, socket_builder)
+          @worker = worker
           @socket_builder = socket_builder
         end
 
@@ -59,7 +61,7 @@ module RSpec
             socket = connect_to_distributor
             break if socket.nil?
             RSpec::Parallel.configuration.logger.debug("Send POP request")
-            socket.puts(Protocol::POP)
+            socket.puts("#{Protocol::POP} #{worker.number}") # TODO: Rescue `Broken pipe (Errno::EPIPE)` error
             _, _, es = IO.select([socket], nil, [socket])
             unless es.empty?
               RSpec::Parallel.configuration.logger.error("Socket error occurs")
@@ -80,6 +82,9 @@ module RSpec
 
         # @return [RSpec::Parallel::SocketBuilder]
         attr_reader :socket_builder
+
+        # @return [RSpec::Parallel::Worker]
+        attr_reader :worker
 
         # @return [BasicSocket, nil]
         def connect_to_distributor

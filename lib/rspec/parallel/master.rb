@@ -19,6 +19,7 @@ module RSpec
         @args = args
         @path = "/tmp/parallel-rspec-#{$PID}.sock"
         @files_to_run = ::RSpec.configuration.files_to_run.uniq
+        @total = @files_to_run.size
         @server = ::UNIXServer.new(@path)
       end
 
@@ -29,15 +30,17 @@ module RSpec
 
       # @return [void]
       def run
+        count = 1
         until files_to_run.empty?
           rs, _ws, _es = IO.select([server])
           rs.each do |s|
             socket = s.accept
-            method, _data = socket.gets.strip.split("\t", 2)
+            method, data = socket.gets.strip.split(" ", 2)
             case method
             when Protocol::POP
               path = files_to_run.pop
-              RSpec::Parallel.configuration.logger.info("Deliver #{path}")
+              RSpec::Parallel.configuration.logger.info("[#{count} / #{total}] Deliver #{path} to worker[#{data}]")
+              count += 1
               socket.write(path)
             when Protocol::PING
               socket.write("ok")
@@ -70,6 +73,9 @@ module RSpec
 
       # @return [UNIXServer]
       attr_reader :server
+
+      # @return [Integer]
+      attr_reader :total
 
       # @return [void]
       def remove_socket_file

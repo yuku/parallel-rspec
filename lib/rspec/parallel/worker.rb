@@ -9,10 +9,10 @@ module RSpec
       # @param master [RSpec::Parallel::Master]
       # @param number [Integer]
       def initialize(master, number)
-        RSpec::Parallel.configuration.logger.info("Initialize Iterator")
+        RSpec::Parallel.configuration.logger.debug("Initialize Iterator")
         @iterator = Iterator.new(master.socket_builder)
         @number = number
-        RSpec::Parallel.configuration.logger.info("Initialize SpecRunner")
+        RSpec::Parallel.configuration.logger.debug("Initialize SpecRunner")
         @spec_runner = SpecRunner.new(master.args)
       end
 
@@ -39,11 +39,11 @@ module RSpec
           loop do
             socket = connect_to_distributor
             if socket.nil?
-              RSpec::Parallel.configuration.logger.info("Sleep a little to wait master process")
+              RSpec::Parallel.configuration.logger.debug("Sleep a little to wait master process")
               sleep 0.5
               next
             end
-            RSpec::Parallel.configuration.logger.info("Send PING request")
+            RSpec::Parallel.configuration.logger.debug("Send PING request")
             socket.puts(Protocol::PING)
             # TODO: handle socket error and check pong message
             IO.select([socket])
@@ -58,7 +58,7 @@ module RSpec
           loop do
             socket = connect_to_distributor
             break if socket.nil?
-            RSpec::Parallel.configuration.logger.info("Send POP request")
+            RSpec::Parallel.configuration.logger.debug("Send POP request")
             socket.puts(Protocol::POP)
             _, _, es = IO.select([socket], nil, [socket])
             unless es.empty?
@@ -68,7 +68,7 @@ module RSpec
             path = socket.read(65_536)
             socket.close
             RSpec.world.example_groups.clear
-            RSpec::Parallel.configuration.logger.info("Load #{path}")
+            RSpec::Parallel.configuration.logger.debug("Load #{path}")
             Kernel.load path
             RSpec.world.example_groups.each do |example_group|
               yield example_group
@@ -108,7 +108,7 @@ module RSpec
 
             @configuration.with_suite_hooks do
               example_groups.map do |g|
-                RSpec::Parallel.configuration.logger.info("Run #{g.inspect}")
+                RSpec::Parallel.configuration.logger.debug("Run #{g.inspect}")
                 g.run(reporter)
               end.all?
             end

@@ -20,13 +20,15 @@ module RSpec
         @master = Master.new(args)
       end
 
-      # @return [void]
+      # @return [Integer] exit status code
       def start
+        waiters = []
         RSpec::Parallel.configuration.concurrency.times do
-          spawn_worker
+          waiters << spawn_worker
         end
         master.run
-        Process.waitall
+        statuses = waiters.map {|waiter| waiter.value }
+        statuses.all? {|status| status.success? } ? 0 : 1
       ensure
         pids.each.with_index do |pid, index|
           puts "----> output from worker[#{index}]"
@@ -49,7 +51,7 @@ module RSpec
         pid = Kernel.fork do
           master.close
 
-          File.open(output_file_path($PID), "w") do |file|
+          exit_code = File.open(output_file_path($PID), "w") do |file|
             # Redirect stdout and stderr to temp file
             STDOUT.reopen(file)
             STDERR.reopen(STDOUT)
@@ -61,7 +63,7 @@ module RSpec
             worker.run
           end
 
-          Kernel.exit! # avoid running any `at_exit` functions.
+          Kernel.exit!(exit_code == 0) # avoid running any `at_exit` functions.
         end
         pids << pid
         Process.detach(pid)
